@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.domain.models.account import Account, AccountStatus, AuthType
+from src.domain.models.account import Account, AccountStatus
 from src.domain.models.user import User, UserRole
 from src.infrastructure.state.account_state_manager import AccountStateManager
 
@@ -25,7 +25,6 @@ def sample_account() -> Account:
         name="Test Account",
         email="test@example.com",
         auth_token="encrypted_token",
-        auth_type=AuthType.API_KEY,
         proxy_url=None,
         status=AccountStatus.AVAILABLE,
         rate_limit_until=None,

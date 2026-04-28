@@ -122,7 +122,7 @@ TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
 ACC_ID=$(curl -s -X POST http://localhost:8000/admin/accounts \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Mock","email":"mock@test.com","auth_token":"fake-key","auth_type":"api_key"}' \
+  -d '{"name":"Mock","email":"mock@test.com","auth_token":"fake-key"}' \
   | jq -r .id)
 
 # Create a user and get their API key
@@ -311,17 +311,7 @@ curl -X POST http://localhost:8001/v1/messages \
    ANTHROPIC_BASE_URL=https://api.anthropic.com
    ```
 
-2. **Add real accounts.** The proxy supports two account types:
-
-   - **Subscription accounts** (`auth_type: session_token`) — for Claude Pro/Team plans ($200/month). Get the token by running `claude setup-token` while logged in to that account:
-     ```bash
-     claude setup-token   # prints a long-lived OAuth token
-     ```
-     Add it via the admin panel or API with `auth_type: "session_token"`.
-
-   - **API key accounts** (`auth_type: api_key`) — for Anthropic API access (`sk-ant-api03-...`). Obtain from [console.anthropic.com](https://console.anthropic.com).
-
-   Account tokens are encrypted at rest with AES-256-GCM.
+2. **Add real accounts.** Use Anthropic API keys (`sk-ant-api03-...`) from [console.anthropic.com](https://console.anthropic.com). Account tokens are encrypted at rest with AES-256-GCM.
 
 3. **Security checklist:**
    - Generate a new `SECRET_KEY` (64+ random hex chars).
@@ -331,7 +321,7 @@ curl -X POST http://localhost:8001/v1/messages \
    - Restrict port 8000 at the firewall — expose only port 80 via nginx.
    - Use TLS termination at the nginx or load-balancer level.
 
-4. **Scaling.** The proxy is stateless except for `AccountStateManager`, which is in-memory. For multi-instance deployments, move state to Redis or use a single proxy instance behind a load balancer.
+4. **Scaling.** The proxy uses Redis for shared state (`AccountStateManager`), so multiple workers and instances are supported out of the box.
 
 ## Showing to Clients (Demo)
 

@@ -28,15 +28,12 @@ class ProbeService:
             token = decrypt_token(account.auth_token)
             client = self._pool.get(account.id)
 
-            headers: dict[str, str] = {"anthropic-version": "2023-06-01"}
-            if account.auth_type == "api_key":
-                headers["x-api-key"] = token
-            else:
-                headers["authorization"] = f"Bearer {token}"
-
             resp = await client.post(
                 "/v1/messages",
-                headers=headers,
+                headers={
+                    "anthropic-version": "2023-06-01",
+                    "x-api-key": token,
+                },
                 json={
                     "model": "claude-haiku-4-5-20251001",
                     "max_tokens": 1,

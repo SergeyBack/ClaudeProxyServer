@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.domain.models.account import Account, AccountStatus, AuthType
+from src.domain.models.account import Account, AccountStatus
 from src.infrastructure.http.client_pool import ClientPool
 
 
@@ -16,7 +16,6 @@ def make_account(proxy_url: str | None = None, account_id: uuid.UUID | None = No
         name="Test Account",
         email="test@example.com",
         auth_token="encrypted_token_placeholder",
-        auth_type=AuthType.API_KEY,
         proxy_url=proxy_url,
         status=AccountStatus.AVAILABLE,
         rate_limit_until=None,

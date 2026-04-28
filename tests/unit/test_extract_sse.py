@@ -2,10 +2,7 @@
 
 import json
 import uuid
-from datetime import UTC, datetime
 from unittest.mock import MagicMock
-
-import pytest
 
 from src.application.services.proxy_service import (
     _build_upstream_headers,
@@ -273,98 +270,88 @@ def test_extract_usage_from_real_sse_stream():
 
 def test_build_headers_strips_host():
     req = make_mock_request({"host": "localhost:8000", "content-type": "application/json"})
-    headers = _build_upstream_headers(req, "Bearer sometoken", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert "host" not in headers
 
 
 def test_build_headers_strips_content_length():
     req = make_mock_request({"content-length": "123", "content-type": "application/json"})
-    headers = _build_upstream_headers(req, "tok", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert "content-length" not in headers
 
 
 def test_build_headers_strips_transfer_encoding():
     req = make_mock_request({"transfer-encoding": "chunked"})
-    headers = _build_upstream_headers(req, "tok", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert "transfer-encoding" not in headers
 
 
 def test_build_headers_strips_connection():
     req = make_mock_request({"connection": "keep-alive"})
-    headers = _build_upstream_headers(req, "tok", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert "connection" not in headers
 
 
 def test_build_headers_strips_x_forwarded_for():
     req = make_mock_request({"x-forwarded-for": "192.168.1.1"})
-    headers = _build_upstream_headers(req, "tok", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert "x-forwarded-for" not in headers
 
 
 def test_build_headers_strips_x_real_ip():
     req = make_mock_request({"x-real-ip": "10.0.0.1"})
-    headers = _build_upstream_headers(req, "tok", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert "x-real-ip" not in headers
 
 
 def test_build_headers_strips_x_request_id():
     req = make_mock_request({"x-request-id": "req-abc-123"})
-    headers = _build_upstream_headers(req, "tok", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert "x-request-id" not in headers
 
 
 def test_build_headers_strips_incoming_authorization():
     req = make_mock_request({"authorization": "Bearer user-ccp-key"})
-    headers = _build_upstream_headers(req, "account-token", "session_token")
-    # The incoming authorization must not appear verbatim — only the injected one
-    assert headers.get("authorization") == "Bearer account-token"
+    headers = _build_upstream_headers(req, "account-token")
+    # Incoming authorization is stripped; only x-api-key is injected
+    assert "authorization" not in headers
 
 
 def test_build_headers_strips_incoming_x_api_key():
     req = make_mock_request({"x-api-key": "user-api-key"})
-    headers = _build_upstream_headers(req, "account-token", "session_token")
-    # The incoming x-api-key is stripped; injected value depends on auth_type
-    assert headers.get("x-api-key") != "user-api-key"
+    headers = _build_upstream_headers(req, "account-token")
+    assert headers.get("x-api-key") == "account-token"
 
 
-def test_build_headers_injects_x_api_key_for_api_key_auth_type():
-    """If auth_type is 'api_key', inject token as x-api-key."""
+def test_build_headers_injects_x_api_key():
     req = make_mock_request({})
-    headers = _build_upstream_headers(req, "sk-ant-api03-secret-key", "api_key")
+    headers = _build_upstream_headers(req, "sk-ant-api03-secret-key")
     assert headers.get("x-api-key") == "sk-ant-api03-secret-key"
     assert "authorization" not in headers
 
 
-def test_build_headers_injects_bearer_for_session_token_auth_type():
-    """If auth_type is 'session_token', inject token as Authorization Bearer."""
-    req = make_mock_request({})
-    headers = _build_upstream_headers(req, "session-token-value", "session_token")
-    assert headers.get("authorization") == "Bearer session-token-value"
-    assert "x-api-key" not in headers
-
-
 def test_build_headers_passes_through_anthropic_version():
     req = make_mock_request({"anthropic-version": "2023-06-01"})
-    headers = _build_upstream_headers(req, "sk-ant-secret", "api_key")
+    headers = _build_upstream_headers(req, "sk-ant-secret")
     assert headers.get("anthropic-version") == "2023-06-01"
 
 
 def test_build_headers_passes_through_content_type():
     req = make_mock_request({"content-type": "application/json"})
-    headers = _build_upstream_headers(req, "sk-ant-secret", "api_key")
+    headers = _build_upstream_headers(req, "sk-ant-secret")
     assert headers.get("content-type") == "application/json"
 
 
 def test_build_headers_passes_through_custom_headers():
     req = make_mock_request({"x-custom-header": "custom-value", "accept": "application/json"})
-    headers = _build_upstream_headers(req, "tok", "session_token")
+    headers = _build_upstream_headers(req, "tok")
     assert headers.get("x-custom-header") == "custom-value"
     assert headers.get("accept") == "application/json"
 
 
 def test_build_headers_empty_incoming_headers():
     req = make_mock_request({})
-    headers = _build_upstream_headers(req, "sk-ant-key", "api_key")
+    headers = _build_upstream_headers(req, "sk-ant-key")
     assert headers.get("x-api-key") == "sk-ant-key"
 
 
@@ -384,9 +371,8 @@ def test_build_headers_all_stripped_headers_together():
             "content-type": "application/json",
         }
     )
-    headers = _build_upstream_headers(req, "sk-ant-real-token", "api_key")
+    headers = _build_upstream_headers(req, "sk-ant-real-token")
 
-    # All stripped headers gone
     for stripped in (
         "host",
         "content-length",
@@ -398,29 +384,8 @@ def test_build_headers_all_stripped_headers_together():
     ):
         assert stripped not in headers
 
-    # Incoming auth replaced by injected account token
     assert headers.get("x-api-key") == "sk-ant-real-token"
     assert headers.get("authorization") is None
 
-    # Non-stripped headers preserved
     assert headers.get("anthropic-version") == "2023-06-01"
     assert headers.get("content-type") == "application/json"
-
-
-def test_build_headers_auth_type_api_key_uses_x_api_key():
-    """auth_type='api_key' always uses x-api-key regardless of token format."""
-    req = make_mock_request({})
-    h1 = _build_upstream_headers(req, "sk-ant-abc", "api_key")
-    assert "x-api-key" in h1
-    assert "authorization" not in h1
-
-    # auth_type='session_token' always uses Authorization Bearer
-    req2 = make_mock_request({})
-    h2 = _build_upstream_headers(req2, "some-oauth-token", "session_token")
-    assert "authorization" in h2
-    assert "x-api-key" not in h2
-
-    req3 = make_mock_request({})
-    h3 = _build_upstream_headers(req3, "another-session-token", "session_token")
-    assert "authorization" in h3
-    assert "x-api-key" not in h3

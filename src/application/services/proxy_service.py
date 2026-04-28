@@ -94,7 +94,7 @@ class ProxyService:
 
         auth_token = decrypt_token(account.auth_token)
         client = self._pool.get(account.id)
-        upstream_headers = _build_upstream_headers(request, auth_token, account.auth_type)
+        upstream_headers = _build_upstream_headers(request, auth_token)
 
         if is_streaming:
             # For streaming, lifecycle (release/log) is managed inside the generator
@@ -256,7 +256,7 @@ def _make_request_id() -> str:
     return secrets.token_hex(16)
 
 
-def _build_upstream_headers(request: Request, auth_token: str, auth_type: str) -> dict:
+def _build_upstream_headers(request: Request, auth_token: str) -> dict:
     headers = {}
     for key, value in request.headers.items():
         if key.lower() in _STRIP_HEADERS:
@@ -266,14 +266,7 @@ def _build_upstream_headers(request: Request, auth_token: str, auth_type: str) -
             continue
         headers[key] = value
 
-    # Inject the selected account's credentials based on auth type:
-    # - api_key (sk-ant-...): Anthropic expects x-api-key header
-    # - session_token (OAuth from `claude setup-token`): expects Authorization: Bearer
-    if auth_type == "api_key":
-        headers["x-api-key"] = auth_token
-    else:
-        headers["authorization"] = f"Bearer {auth_token}"
-
+    headers["x-api-key"] = auth_token
     return headers
 
 

@@ -3,8 +3,6 @@
 import uuid
 from unittest.mock import AsyncMock
 
-import pytest
-
 from src.application.services.stats_service import StatsService
 
 

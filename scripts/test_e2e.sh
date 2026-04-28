@@ -68,7 +68,7 @@ echo "--- Accounts ---"
 ACC=$(curl -s -X POST "$PROXY/admin/accounts" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Test Account","email":"mock@test.com","auth_token":"fake-test-token","auth_type":"api_key"}')
+  -d '{"name":"Test Account","email":"mock@test.com","auth_token":"fake-test-token"}')
 ACC_ID=$(echo "$ACC" | jq -r '.id // empty')
 if [ -n "$ACC_ID" ]; then
   green "Create Claude account → id=$ACC_ID"

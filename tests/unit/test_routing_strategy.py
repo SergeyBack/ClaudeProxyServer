@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 import pytest
 
 from src.application.routing.least_connections import LeastConnectionsStrategy
-from src.domain.models.account import Account, AccountStatus, AuthType
+from src.domain.models.account import Account, AccountStatus
 from src.infrastructure.state.account_state_manager import AccountStateManager
 
 
@@ -16,7 +16,6 @@ def make_account(priority: int = 0, status: AccountStatus = AccountStatus.AVAILA
         name="acc",
         email="e@e.com",
         auth_token="tok",
-        auth_type=AuthType.API_KEY,
         proxy_url=None,
         status=status,
         rate_limit_until=None,

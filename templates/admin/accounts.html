@@ -15,9 +15,9 @@
 <div class="card">
   <table class="table table-hover mb-0">
     <thead class="table-light">
-      <tr><th>Name</th><th>Email</th><th>Type</th><th>Status</th><th>Connections</th><th>Priority</th><th>Last Used</th><th>Actions</th></tr>
+      <tr><th>Name</th><th>Email</th><th>Status</th><th>Connections</th><th>Priority</th><th>Last Used</th><th>Actions</th></tr>
     </thead>
-    <tbody id="accountsTable"><tr><td colspan="8" class="text-center text-muted py-4">Loading…</td></tr></tbody>
+    <tbody id="accountsTable"><tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr></tbody>
   </table>
 </div>
 
@@ -30,14 +30,7 @@
         <div id="addError" class="alert alert-danger d-none"></div>
         <div class="mb-3"><label class="form-label">Name</label><input type="text" class="form-control" id="addName" placeholder="Account A"/></div>
         <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="addEmail" placeholder="account@example.com"/></div>
-        <div class="mb-3">
-          <label class="form-label">Auth Type</label>
-          <select class="form-select" id="addAuthType">
-            <option value="api_key">API Key (sk-ant-...)</option>
-            <option value="session_token">Session Token</option>
-          </select>
-        </div>
-        <div class="mb-3"><label class="form-label">Token / API Key</label><input type="password" class="form-control" id="addToken" placeholder="sk-ant-..."/></div>
+        <div class="mb-3"><label class="form-label">API Key</label><input type="password" class="form-control" id="addToken" placeholder="sk-ant-api03-..."/></div>
         <div class="mb-3"><label class="form-label">Proxy URL (optional)</label><input type="text" class="form-control" id="addProxy" placeholder="socks5://user:pass@host:port"/></div>
         <div class="row">
           <div class="col"><label class="form-label">Max Connections</label><input type="number" class="form-control" id="addMaxConn" value="10"/></div>
@@ -60,14 +53,13 @@ async function loadAccounts() {
   const accounts = await resp.json();
   const tbody = document.getElementById('accountsTable');
   if (!accounts.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No accounts yet. Add one to get started.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No accounts yet. Add one to get started.</td></tr>';
     return;
   }
   tbody.innerHTML = accounts.map(a => `
     <tr>
       <td class="fw-semibold">${a.name}</td>
       <td class="text-muted small">${a.email}</td>
-      <td><span class="badge bg-secondary">${a.auth_type}</span></td>
       <td><span class="badge badge-${a.status}">${a.status}</span></td>
       <td>${a.active_connections}</td>
       <td>${a.priority}</td>
@@ -110,7 +102,6 @@ async function addAccount() {
   const body = {
     name: document.getElementById('addName').value,
     email: document.getElementById('addEmail').value,
-    auth_type: document.getElementById('addAuthType').value,
     auth_token: document.getElementById('addToken').value,
     proxy_url: document.getElementById('addProxy').value || null,
     max_connections: parseInt(document.getElementById('addMaxConn').value),

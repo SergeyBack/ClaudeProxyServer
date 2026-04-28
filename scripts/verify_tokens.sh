@@ -31,7 +31,7 @@ USER_JWT=$(curl -s -X POST "$PROXY/auth/login" \
 ACC_ID=$(curl -s -X POST "$PROXY/admin/accounts" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Token Test Account","email":"t@t.com","auth_token":"fake","auth_type":"api_key"}' | jq -r .id)
+  -d '{"name":"Token Test Account","email":"t@t.com","auth_token":"fake"}' | jq -r .id)
 echo "✓ Created Claude account"
 
 # 4. Send 3 requests through proxy

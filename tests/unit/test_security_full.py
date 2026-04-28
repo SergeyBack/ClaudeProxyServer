@@ -1,8 +1,6 @@
 """Comprehensive unit tests for all security functions in src/core/security.py."""
 
-import time
 from datetime import UTC, datetime, timedelta
-from unittest.mock import patch
 
 import pytest
 from jose import jwt

@@ -52,7 +52,6 @@ async def banned_accounts(
             id=a.id,
             name=a.name,
             email=a.email,
-            auth_type=a.auth_type,
             status=a.status,
             rate_limit_until=a.rate_limit_until,
             max_connections=a.max_connections,

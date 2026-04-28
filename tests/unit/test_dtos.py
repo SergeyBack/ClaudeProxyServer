@@ -27,13 +27,12 @@ from src.application.dto.user_dto import (
     UserResponse,
     UserUpdateRequest,
 )
-from src.domain.models.account import AccountStatus, AuthType
+from src.domain.models.account import AccountStatus
 from src.domain.models.user import UserRole
 
 
 def test_account_create_defaults():
     req = AccountCreateRequest(name="Test", email="t@t.com", auth_token="tok")
-    assert req.auth_type == AuthType.API_KEY
     assert req.max_connections == 10
     assert req.priority == 0
     assert req.proxy_url is None
@@ -44,7 +43,6 @@ def test_account_create_all_fields():
         name="Prod Account",
         email="prod@example.com",
         auth_token="sk-ant-api03-secret",
-        auth_type=AuthType.SESSION_TOKEN,
         proxy_url="socks5://proxy.example.com:1080",
         max_connections=5,
         priority=10,
@@ -52,7 +50,6 @@ def test_account_create_all_fields():
     assert req.name == "Prod Account"
     assert req.email == "prod@example.com"
     assert req.auth_token == "sk-ant-api03-secret"
-    assert req.auth_type == AuthType.SESSION_TOKEN
     assert req.proxy_url == "socks5://proxy.example.com:1080"
     assert req.max_connections == 5
     assert req.priority == 10
@@ -76,18 +73,10 @@ def test_account_create_missing_required_fields():
         AccountCreateRequest(name="Test", auth_token="tok")  # missing email
 
 
-def test_account_create_session_token_type():
-    req = AccountCreateRequest(
-        name="T", email="t@t.com", auth_token="tok", auth_type=AuthType.SESSION_TOKEN
-    )
-    assert req.auth_type == AuthType.SESSION_TOKEN
-
-
 def test_account_update_all_optional():
     req = AccountUpdateRequest()
     assert req.name is None
     assert req.auth_token is None
-    assert req.auth_type is None
     assert req.proxy_url is None
     assert req.max_connections is None
     assert req.priority is None
@@ -104,14 +93,12 @@ def test_account_update_full():
     req = AccountUpdateRequest(
         name="Updated",
         auth_token="new-token",
-        auth_type=AuthType.SESSION_TOKEN,
         proxy_url="http://proxy:8080",
         max_connections=15,
         priority=5,
     )
     assert req.name == "Updated"
     assert req.auth_token == "new-token"
-    assert req.auth_type == AuthType.SESSION_TOKEN
     assert req.proxy_url == "http://proxy:8080"
     assert req.max_connections == 15
     assert req.priority == 5
@@ -123,7 +110,6 @@ def test_account_response_construction():
         id=uuid.uuid4(),
         name="Test",
         email="test@example.com",
-        auth_type=AuthType.API_KEY,
         status=AccountStatus.AVAILABLE,
         rate_limit_until=None,
         max_connections=10,
@@ -144,7 +130,6 @@ def test_account_response_with_rate_limit():
         id=uuid.uuid4(),
         name="Limited",
         email="l@example.com",
-        auth_type=AuthType.API_KEY,
         status=AccountStatus.RATE_LIMITED,
         rate_limit_until=now,
         max_connections=10,
@@ -165,7 +150,6 @@ def test_account_response_from_attributes():
         id = uuid.uuid4()
         name = "ORM Account"
         email = "orm@example.com"
-        auth_type = AuthType.API_KEY
         status = AccountStatus.AVAILABLE
         rate_limit_until = None
         max_connections = 10
@@ -185,7 +169,6 @@ def test_account_response_active_connections_default():
         id=uuid.uuid4(),
         name="T",
         email="t@t.com",
-        auth_type=AuthType.API_KEY,
         status=AccountStatus.AVAILABLE,
         rate_limit_until=None,
         max_connections=10,

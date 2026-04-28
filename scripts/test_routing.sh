@@ -32,7 +32,7 @@ for i in 1 2 3; do
   ID=$(curl -s -X POST "$PROXY/admin/accounts" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{\"name\":\"Route Test $i\",\"email\":\"route$i@test.com\",\"auth_token\":\"fake-key-$i\",\"auth_type\":\"api_key\"}" \
+    -d "{\"name\":\"Route Test $i\",\"email\":\"route$i@test.com\",\"auth_token\":\"fake-key-$i\"}" \
     | jq -r '.id // empty')
   [ -z "$ID" ] && { red "Failed to create account $i"; exit 1; }
   ACC_IDS+=("$ID")

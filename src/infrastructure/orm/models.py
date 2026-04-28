@@ -55,7 +55,6 @@ class ClaudeAccountORM(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     auth_token: Mapped[str] = mapped_column(Text, nullable=False)
-    auth_type: Mapped[str] = mapped_column(String(20), nullable=False, default="api_key")
     proxy_url: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="available")
     rate_limit_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

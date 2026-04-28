@@ -125,8 +125,7 @@ curl -s -X POST https://<your-proxy-url>/admin/accounts \
   -d '{
     "name": "Company Account 1",
     "email": "account1@company.com",
-    "auth_token": "sk-ant-api03-...",
-    "auth_type": "api_key"
+    "auth_token": "sk-ant-api03-..."
   }' | jq '{id, name, status}'
 
 # 3. Create a test user and get their API key

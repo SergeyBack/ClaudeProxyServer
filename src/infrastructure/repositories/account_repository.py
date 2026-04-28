@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.domain.models.account import Account, AccountStatus, AuthType
+from src.domain.models.account import Account, AccountStatus
 from src.infrastructure.orm.models import ClaudeAccountORM
 
 
@@ -14,7 +14,6 @@ def _orm_to_domain(row: ClaudeAccountORM) -> Account:
         name=row.name,
         email=row.email,
         auth_token=row.auth_token,
-        auth_type=AuthType(row.auth_type),
         proxy_url=row.proxy_url,
         status=AccountStatus(row.status),
         rate_limit_until=row.rate_limit_until,
@@ -50,7 +49,6 @@ class SqlAccountRepository:
             name=account.name,
             email=account.email,
             auth_token=account.auth_token,
-            auth_type=account.auth_type.value,
             proxy_url=account.proxy_url,
             status=account.status.value,
             rate_limit_until=account.rate_limit_until,
@@ -69,7 +67,6 @@ class SqlAccountRepository:
         row.name = account.name
         row.email = account.email
         row.auth_token = account.auth_token
-        row.auth_type = account.auth_type.value
         row.proxy_url = account.proxy_url
         row.status = account.status.value
         row.rate_limit_until = account.rate_limit_until

@@ -11,18 +11,12 @@ class AccountStatus(StrEnum):
     DISABLED = "disabled"
 
 
-class AuthType(StrEnum):
-    API_KEY = "api_key"
-    SESSION_TOKEN = "session_token"
-
-
 @dataclass
 class Account:
     id: UUID
     name: str
     email: str
-    auth_token: str  # AES-GCM encrypted
-    auth_type: AuthType
+    auth_token: str  # AES-GCM encrypted sk-ant-api03- key
     proxy_url: str | None  # AES-GCM encrypted, or None
     status: AccountStatus
     rate_limit_until: datetime | None

@@ -9,7 +9,7 @@ import pytest
 from src.application.dto.account_dto import AccountCreateRequest, AccountUpdateRequest
 from src.application.services.account_service import AccountService
 from src.domain.exceptions import AccountNotFoundError
-from src.domain.models.account import Account, AccountStatus, AuthType
+from src.domain.models.account import Account, AccountStatus
 
 
 def make_account(
@@ -24,7 +24,6 @@ def make_account(
         name=name,
         email=email,
         auth_token="encrypted_token",
-        auth_type=AuthType.API_KEY,
         proxy_url=None,
         status=status,
         rate_limit_until=None,
@@ -286,19 +285,6 @@ async def test_update_account_raises_when_not_found(mock_account_repo, mock_pool
 
     with pytest.raises(AccountNotFoundError):
         await service.update_account(uuid.uuid4(), AccountUpdateRequest(name="X"))
-
-
-async def test_update_account_updates_auth_type(mock_account_repo, mock_pool, state_manager):
-    acc = make_account()
-    mock_account_repo.get_by_id = AsyncMock(return_value=acc)
-    mock_account_repo.update = AsyncMock(return_value=acc)
-    service = AccountService(mock_account_repo, mock_pool, state_manager)
-
-    req = AccountUpdateRequest(auth_type=AuthType.SESSION_TOKEN)
-    await service.update_account(acc.id, req)
-
-    call_arg = mock_account_repo.update.call_args[0][0]
-    assert call_arg.auth_type == AuthType.SESSION_TOKEN
 
 
 async def test_delete_account_calls_repo_delete(mock_account_repo, mock_pool, state_manager):

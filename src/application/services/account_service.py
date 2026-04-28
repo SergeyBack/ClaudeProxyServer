@@ -7,7 +7,7 @@ from src.core.security import encrypt_token
 from src.domain.exceptions import AccountNotFoundError
 from src.domain.interfaces.account_repository import AccountRepository
 from src.domain.interfaces.account_state_manager import IAccountStateManager
-from src.domain.models.account import Account, AccountStatus, AuthType
+from src.domain.models.account import Account, AccountStatus
 from src.infrastructure.http.client_pool import ClientPool
 
 
@@ -46,7 +46,6 @@ class AccountService:
             name=req.name,
             email=req.email,
             auth_token=encrypted_token,
-            auth_type=AuthType(req.auth_type),
             proxy_url=encrypted_proxy,
             status=AccountStatus.AVAILABLE,
             rate_limit_until=None,
@@ -68,8 +67,6 @@ class AccountService:
             account.name = req.name
         if req.auth_token is not None:
             account.auth_token = encrypt_token(req.auth_token)
-        if req.auth_type is not None:
-            account.auth_type = AuthType(req.auth_type)
         if req.proxy_url is not None:
             account.proxy_url = encrypt_token(req.proxy_url)
         if req.max_connections is not None:
