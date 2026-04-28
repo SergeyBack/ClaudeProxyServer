@@ -11,9 +11,6 @@ from src.domain.exceptions import InvalidCredentialsError, UserNotFoundError
 from src.domain.models.user import User, UserRole
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-
 def make_user(
     username="alice",
     password_hash="$2b$12$fakehash",
@@ -34,9 +31,6 @@ def make_user(
         created_at=None,
         updated_at=None,
     )
-
-
-# ── authenticate ──────────────────────────────────────────────────────────────
 
 
 async def test_authenticate_returns_user_on_valid_credentials(mock_user_repo):
@@ -85,9 +79,6 @@ async def test_authenticate_raises_invalid_credentials_not_found_error(mock_user
 
     with pytest.raises(InvalidCredentialsError):
         await service.authenticate("nobody", "anything")
-
-
-# ── get_by_api_key ────────────────────────────────────────────────────────────
 
 
 async def test_get_by_api_key_returns_none_for_wrong_prefix(mock_user_repo):
@@ -153,9 +144,6 @@ async def test_get_by_api_key_uses_first_12_chars_as_prefix(mock_user_repo):
     mock_user_repo.get_by_api_key_prefix.assert_called_once_with("ccp_abcdefgh")
 
 
-# ── get_by_id ─────────────────────────────────────────────────────────────────
-
-
 async def test_get_by_id_returns_user(mock_user_repo):
     user = make_user()
     mock_user_repo.get_by_id = AsyncMock(return_value=user)
@@ -173,9 +161,6 @@ async def test_get_by_id_raises_when_not_found(mock_user_repo):
         await service.get_by_id(uuid.uuid4())
 
 
-# ── list_users ────────────────────────────────────────────────────────────────
-
-
 async def test_list_users_returns_all(mock_user_repo):
     users = [make_user("alice"), make_user("bob")]
     mock_user_repo.list_all = AsyncMock(return_value=users)
@@ -191,9 +176,6 @@ async def test_list_users_returns_empty_list(mock_user_repo):
 
     result = await service.list_users()
     assert result == []
-
-
-# ── create_user ───────────────────────────────────────────────────────────────
 
 
 async def test_create_user_returns_user_and_raw_key(mock_user_repo):
@@ -275,9 +257,6 @@ async def test_create_user_hashes_password(mock_user_repo):
             await service.create_user(req)
 
     mock_hash.assert_called_once_with("secret!")
-
-
-# ── update_user ───────────────────────────────────────────────────────────────
 
 
 async def test_update_user_updates_email(mock_user_repo):
@@ -366,9 +345,6 @@ async def test_update_user_with_no_fields_does_not_modify(mock_user_repo):
     assert call_arg.password_hash == original_hash
 
 
-# ── rotate_api_key ────────────────────────────────────────────────────────────
-
-
 async def test_rotate_api_key_returns_user_and_new_key(mock_user_repo):
     user = make_user()
     mock_user_repo.get_by_id = AsyncMock(return_value=user)
@@ -408,9 +384,6 @@ async def test_rotate_api_key_raises_when_user_not_found(mock_user_repo):
 
     with pytest.raises(UserNotFoundError):
         await service.rotate_api_key(uuid.uuid4())
-
-
-# ── ensure_admin_exists ───────────────────────────────────────────────────────
 
 
 async def test_ensure_admin_exists_creates_when_no_users(mock_user_repo):

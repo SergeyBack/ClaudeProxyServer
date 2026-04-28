@@ -10,9 +10,6 @@ from src.domain.models.account import Account, AccountStatus, AuthType
 from src.infrastructure.http.client_pool import ClientPool
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-
 def make_account(proxy_url: str | None = None, account_id: uuid.UUID | None = None) -> Account:
     return Account(
         id=account_id or uuid.uuid4(),
@@ -36,9 +33,6 @@ def make_mock_client() -> MagicMock:
     client = MagicMock()
     client.aclose = AsyncMock()
     return client
-
-
-# ── add / get ─────────────────────────────────────────────────────────────────
 
 
 @pytest.mark.asyncio
@@ -92,9 +86,6 @@ async def test_get_raises_key_error_after_remove():
         pool.get(account.id)
 
 
-# ── remove ────────────────────────────────────────────────────────────────────
-
-
 @pytest.mark.asyncio
 async def test_remove_closes_client():
     pool = ClientPool()
@@ -137,9 +128,6 @@ async def test_remove_only_removes_target():
         pool.get(acc1.id)
 
 
-# ── close_all ─────────────────────────────────────────────────────────────────
-
-
 @pytest.mark.asyncio
 async def test_close_all_closes_every_client():
     pool = ClientPool()
@@ -175,9 +163,6 @@ async def test_close_all_clears_pool():
 async def test_close_all_empty_pool_does_not_raise():
     pool = ClientPool()
     await pool.close_all()  # should not raise
-
-
-# ── refresh ───────────────────────────────────────────────────────────────────
 
 
 @pytest.mark.asyncio
@@ -239,9 +224,6 @@ async def test_refresh_account_not_previously_added():
     assert pool.get(account.id) is mock_client
 
 
-# ── initialize ────────────────────────────────────────────────────────────────
-
-
 @pytest.mark.asyncio
 async def test_initialize_adds_all_accounts():
     pool = ClientPool()
@@ -271,9 +253,6 @@ async def test_initialize_single_account():
         await pool.initialize([account])
 
     assert pool.get(account.id) is mock_client
-
-
-# ── proxy_url handling ────────────────────────────────────────────────────────
 
 
 @pytest.mark.asyncio

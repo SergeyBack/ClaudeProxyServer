@@ -22,9 +22,6 @@ from src.core.security import (
 )
 
 
-# ── encrypt_token / decrypt_token ─────────────────────────────────────────────
-
-
 def test_encrypt_decrypt_roundtrip():
     plaintext = "sk-ant-api03-supersecretkey"
     encrypted = encrypt_token(plaintext)
@@ -46,6 +43,7 @@ def test_decrypt_returns_original_plaintext():
 
 def test_encrypt_output_is_base64_string():
     import base64
+
     encrypted = encrypt_token("test-token")
     # Should be valid base64
     decoded = base64.b64decode(encrypted)
@@ -79,14 +77,12 @@ def test_decrypt_tampered_ciphertext_raises():
     encrypted = encrypt_token("original")
     # Tamper with the ciphertext (flip a byte in the middle)
     import base64
+
     raw = bytearray(base64.b64decode(encrypted))
     raw[20] ^= 0xFF  # flip bits in ciphertext portion
     tampered = base64.b64encode(bytes(raw)).decode()
     with pytest.raises(Exception):
         decrypt_token(tampered)
-
-
-# ── hash_password / verify_password ──────────────────────────────────────────
 
 
 def test_hash_password_returns_string():
@@ -140,9 +136,6 @@ def test_verify_password_case_sensitive():
     assert verify_password("Secret123", hashed) is True
     assert verify_password("secret123", hashed) is False
     assert verify_password("SECRET123", hashed) is False
-
-
-# ── generate_api_key / verify_api_key ────────────────────────────────────────
 
 
 def test_generate_api_key_returns_tuple():
@@ -206,9 +199,6 @@ def test_verify_api_key_cross_keys():
     assert verify_api_key(raw2, hashed1) is False
 
 
-# ── create_access_token / decode_access_token ─────────────────────────────────
-
-
 def test_create_access_token_returns_string():
     token = create_access_token("user-123")
     assert isinstance(token, str)
@@ -223,6 +213,7 @@ def test_decode_access_token_returns_subject():
 
 def test_decode_access_token_uuid_subject():
     import uuid
+
     user_id = str(uuid.uuid4())
     token = create_access_token(user_id)
     assert decode_access_token(token) == user_id
@@ -306,9 +297,6 @@ def test_access_token_expiry_respects_settings():
     expected_exp = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     # Allow 5 seconds of tolerance
     assert abs((exp - expected_exp).total_seconds()) < 5
-
-
-# ── create_refresh_token ──────────────────────────────────────────────────────
 
 
 def test_create_refresh_token_returns_string():

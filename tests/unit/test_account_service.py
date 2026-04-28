@@ -12,9 +12,6 @@ from src.domain.exceptions import AccountNotFoundError
 from src.domain.models.account import Account, AccountStatus, AuthType
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-
 def make_account(
     status=AccountStatus.AVAILABLE,
     name="Test Account",
@@ -48,9 +45,6 @@ def mock_pool():
     return pool
 
 
-# ── list_accounts ─────────────────────────────────────────────────────────────
-
-
 async def test_list_accounts_returns_accounts_with_connection_counts(
     mock_account_repo, mock_pool, state_manager
 ):
@@ -82,9 +76,6 @@ async def test_list_accounts_returns_empty_when_no_accounts(
     assert result == []
 
 
-# ── get_account ───────────────────────────────────────────────────────────────
-
-
 async def test_get_account_returns_account(mock_account_repo, mock_pool, state_manager):
     acc = make_account()
     mock_account_repo.get_by_id = AsyncMock(return_value=acc)
@@ -100,9 +91,6 @@ async def test_get_account_raises_when_not_found(mock_account_repo, mock_pool, s
 
     with pytest.raises(AccountNotFoundError):
         await service.get_account(uuid.uuid4())
-
-
-# ── create_account ────────────────────────────────────────────────────────────
 
 
 async def test_create_account_returns_created_account(mock_account_repo, mock_pool, state_manager):
@@ -203,9 +191,6 @@ async def test_create_account_sets_available_status(mock_account_repo, mock_pool
 
     call_arg = mock_account_repo.create.call_args[0][0]
     assert call_arg.status == AccountStatus.AVAILABLE
-
-
-# ── update_account ────────────────────────────────────────────────────────────
 
 
 async def test_update_account_updates_name(mock_account_repo, mock_pool, state_manager):
@@ -316,9 +301,6 @@ async def test_update_account_updates_auth_type(mock_account_repo, mock_pool, st
     assert call_arg.auth_type == AuthType.SESSION_TOKEN
 
 
-# ── delete_account ────────────────────────────────────────────────────────────
-
-
 async def test_delete_account_calls_repo_delete(mock_account_repo, mock_pool, state_manager):
     acc = make_account()
     mock_account_repo.get_by_id = AsyncMock(return_value=acc)
@@ -349,9 +331,6 @@ async def test_delete_account_raises_when_not_found(mock_account_repo, mock_pool
         await service.delete_account(uuid.uuid4())
 
 
-# ── unban_account ─────────────────────────────────────────────────────────────
-
-
 async def test_unban_account_sets_status_to_available(mock_account_repo, mock_pool, state_manager):
     acc = make_account(status=AccountStatus.BANNED)
     mock_account_repo.get_by_id = AsyncMock(return_value=acc)
@@ -360,9 +339,7 @@ async def test_unban_account_sets_status_to_available(mock_account_repo, mock_po
 
     result = await service.unban_account(acc.id)
 
-    mock_account_repo.update_status.assert_called_once_with(
-        acc.id, AccountStatus.AVAILABLE, None
-    )
+    mock_account_repo.update_status.assert_called_once_with(acc.id, AccountStatus.AVAILABLE, None)
     assert result.status == AccountStatus.AVAILABLE
 
 
@@ -402,9 +379,6 @@ async def test_unban_account_returns_account_with_cleared_rate_limit(
     result = await service.unban_account(acc.id)
 
     assert result.rate_limit_until is None
-
-
-# ── get_banned_accounts ───────────────────────────────────────────────────────
 
 
 async def test_get_banned_accounts_returns_banned_and_rate_limited(

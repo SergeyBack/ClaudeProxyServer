@@ -14,9 +14,6 @@ from src.application.services.proxy_service import (
 from src.domain.models.request_log import RequestLog
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-
 def make_log() -> RequestLog:
     return RequestLog(
         user_id=uuid.uuid4(),
@@ -44,19 +41,18 @@ def make_mock_request(headers: dict) -> MagicMock:
     return req
 
 
-# ── _extract_usage_from_sse ───────────────────────────────────────────────────
-
-
 def test_extract_message_delta_usage():
     """message_delta events carry output_tokens in a top-level 'usage' key."""
     log = make_log()
-    data = make_sse([
-        {
-            "type": "message_delta",
-            "delta": {"stop_reason": "end_turn"},
-            "usage": {"output_tokens": 42},
-        }
-    ])
+    data = make_sse(
+        [
+            {
+                "type": "message_delta",
+                "delta": {"stop_reason": "end_turn"},
+                "usage": {"output_tokens": 42},
+            }
+        ]
+    )
     _extract_usage_from_sse(data, log)
     assert log.output_tokens == 42
 
@@ -64,15 +60,17 @@ def test_extract_message_delta_usage():
 def test_extract_message_start_usage():
     """message_start events carry input_tokens inside 'message.usage'."""
     log = make_log()
-    data = make_sse([
-        {
-            "type": "message_start",
-            "message": {
-                "id": "msg_abc",
-                "usage": {"input_tokens": 15},
-            },
-        }
-    ])
+    data = make_sse(
+        [
+            {
+                "type": "message_start",
+                "message": {
+                    "id": "msg_abc",
+                    "usage": {"input_tokens": 15},
+                },
+            }
+        ]
+    )
     _extract_usage_from_sse(data, log)
     assert log.input_tokens == 15
 
@@ -80,17 +78,19 @@ def test_extract_message_start_usage():
 def test_extract_both_input_and_output_tokens():
     """Combining message_start and message_delta populates both fields."""
     log = make_log()
-    data = make_sse([
-        {
-            "type": "message_start",
-            "message": {"usage": {"input_tokens": 10}},
-        },
-        {
-            "type": "message_delta",
-            "delta": {"stop_reason": "end_turn"},
-            "usage": {"output_tokens": 5},
-        },
-    ])
+    data = make_sse(
+        [
+            {
+                "type": "message_start",
+                "message": {"usage": {"input_tokens": 10}},
+            },
+            {
+                "type": "message_delta",
+                "delta": {"stop_reason": "end_turn"},
+                "usage": {"output_tokens": 5},
+            },
+        ]
+    )
     _extract_usage_from_sse(data, log)
     assert log.input_tokens == 10
     assert log.output_tokens == 5
@@ -125,9 +125,9 @@ def test_extract_empty_bytes():
 def test_extract_no_usage_in_event():
     """Events without a 'usage' key don't update log."""
     log = make_log()
-    data = make_sse([
-        {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "hi"}}
-    ])
+    data = make_sse(
+        [{"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "hi"}}]
+    )
     _extract_usage_from_sse(data, log)
     assert log.input_tokens is None
     assert log.output_tokens is None
@@ -135,15 +135,17 @@ def test_extract_no_usage_in_event():
 
 def test_extract_cache_read_tokens():
     log = make_log()
-    data = make_sse([
-        {
-            "type": "message_delta",
-            "usage": {
-                "output_tokens": 10,
-                "cache_read_input_tokens": 500,
-            },
-        }
-    ])
+    data = make_sse(
+        [
+            {
+                "type": "message_delta",
+                "usage": {
+                    "output_tokens": 10,
+                    "cache_read_input_tokens": 500,
+                },
+            }
+        ]
+    )
     _extract_usage_from_sse(data, log)
     assert log.cache_read_tokens == 500
     assert log.output_tokens == 10
@@ -151,15 +153,17 @@ def test_extract_cache_read_tokens():
 
 def test_extract_cache_creation_tokens():
     log = make_log()
-    data = make_sse([
-        {
-            "type": "message_delta",
-            "usage": {
-                "output_tokens": 8,
-                "cache_creation_input_tokens": 1000,
-            },
-        }
-    ])
+    data = make_sse(
+        [
+            {
+                "type": "message_delta",
+                "usage": {
+                    "output_tokens": 8,
+                    "cache_creation_input_tokens": 1000,
+                },
+            }
+        ]
+    )
     _extract_usage_from_sse(data, log)
     assert log.cache_write_tokens == 1000
     assert log.output_tokens == 8
@@ -167,20 +171,22 @@ def test_extract_cache_creation_tokens():
 
 def test_extract_all_token_types():
     log = make_log()
-    data = make_sse([
-        {
-            "type": "message_start",
-            "message": {"usage": {"input_tokens": 20}},
-        },
-        {
-            "type": "message_delta",
-            "usage": {
-                "output_tokens": 15,
-                "cache_read_input_tokens": 300,
-                "cache_creation_input_tokens": 50,
+    data = make_sse(
+        [
+            {
+                "type": "message_start",
+                "message": {"usage": {"input_tokens": 20}},
             },
-        },
-    ])
+            {
+                "type": "message_delta",
+                "usage": {
+                    "output_tokens": 15,
+                    "cache_read_input_tokens": 300,
+                    "cache_creation_input_tokens": 50,
+                },
+            },
+        ]
+    )
     _extract_usage_from_sse(data, log)
     assert log.input_tokens == 20
     assert log.output_tokens == 15
@@ -191,10 +197,12 @@ def test_extract_all_token_types():
 def test_extract_later_event_overwrites_earlier():
     """Later usage values overwrite earlier ones (last-write wins)."""
     log = make_log()
-    data = make_sse([
-        {"type": "message_start", "message": {"usage": {"input_tokens": 10}}},
-        {"type": "message_delta", "usage": {"input_tokens": 20, "output_tokens": 5}},
-    ])
+    data = make_sse(
+        [
+            {"type": "message_start", "message": {"usage": {"input_tokens": 10}}},
+            {"type": "message_delta", "usage": {"input_tokens": 20, "output_tokens": 5}},
+        ]
+    )
     _extract_usage_from_sse(data, log)
     # The second event has input_tokens=20, which should overwrite 10
     assert log.input_tokens == 20
@@ -204,9 +212,10 @@ def test_extract_later_event_overwrites_earlier():
 def test_extract_non_data_lines_ignored():
     """Lines not starting with 'data: ' should be silently skipped."""
     log = make_log()
-    raw = b"event: message_start\nid: 1\n: comment\ndata: " + json.dumps(
-        {"type": "message_start", "message": {"usage": {"input_tokens": 7}}}
-    ).encode()
+    raw = (
+        b"event: message_start\nid: 1\n: comment\ndata: "
+        + json.dumps({"type": "message_start", "message": {"usage": {"input_tokens": 7}}}).encode()
+    )
     _extract_usage_from_sse(raw, log)
     assert log.input_tokens == 7
 
@@ -215,7 +224,9 @@ def test_extract_handles_non_utf8_gracefully():
     """Invalid UTF-8 bytes should not raise — errors='ignore' covers this."""
     log = make_log()
     # Mix valid SSE data with some non-UTF8 bytes
-    valid_part = b"data: " + json.dumps({"type": "message_delta", "usage": {"output_tokens": 3}}).encode()
+    valid_part = (
+        b"data: " + json.dumps({"type": "message_delta", "usage": {"output_tokens": 3}}).encode()
+    )
     garbage = b"\xff\xfe"
     _extract_usage_from_sse(garbage + valid_part, log)
     # log may or may not be updated depending on split, but must not raise
@@ -258,9 +269,6 @@ def test_extract_usage_from_real_sse_stream():
     _extract_usage_from_sse(sse_bytes, log)
     assert log.input_tokens == 10
     assert log.output_tokens == 5
-
-
-# ── _build_upstream_headers ───────────────────────────────────────────────────
 
 
 def test_build_headers_strips_host():
@@ -361,24 +369,33 @@ def test_build_headers_empty_incoming_headers():
 
 
 def test_build_headers_all_stripped_headers_together():
-    req = make_mock_request({
-        "host": "localhost",
-        "content-length": "100",
-        "transfer-encoding": "chunked",
-        "connection": "keep-alive",
-        "x-forwarded-for": "1.2.3.4",
-        "x-real-ip": "5.6.7.8",
-        "x-request-id": "req-id",
-        "authorization": "Bearer user-key",
-        "x-api-key": "user-key",
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-    })
+    req = make_mock_request(
+        {
+            "host": "localhost",
+            "content-length": "100",
+            "transfer-encoding": "chunked",
+            "connection": "keep-alive",
+            "x-forwarded-for": "1.2.3.4",
+            "x-real-ip": "5.6.7.8",
+            "x-request-id": "req-id",
+            "authorization": "Bearer user-key",
+            "x-api-key": "user-key",
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
+    )
     headers = _build_upstream_headers(req, "sk-ant-real-token")
 
     # All stripped headers gone
-    for stripped in ("host", "content-length", "transfer-encoding", "connection",
-                     "x-forwarded-for", "x-real-ip", "x-request-id"):
+    for stripped in (
+        "host",
+        "content-length",
+        "transfer-encoding",
+        "connection",
+        "x-forwarded-for",
+        "x-real-ip",
+        "x-request-id",
+    ):
         assert stripped not in headers
 
     # Incoming auth replaced by injected account token

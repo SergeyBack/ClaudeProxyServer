@@ -31,9 +31,6 @@ from src.domain.models.account import AccountStatus, AuthType
 from src.domain.models.user import UserRole
 
 
-# ── AccountCreateRequest ──────────────────────────────────────────────────────
-
-
 def test_account_create_defaults():
     req = AccountCreateRequest(name="Test", email="t@t.com", auth_token="tok")
     assert req.auth_type == AuthType.API_KEY
@@ -86,9 +83,6 @@ def test_account_create_session_token_type():
     assert req.auth_type == AuthType.SESSION_TOKEN
 
 
-# ── AccountUpdateRequest ──────────────────────────────────────────────────────
-
-
 def test_account_update_all_optional():
     req = AccountUpdateRequest()
     assert req.name is None
@@ -121,9 +115,6 @@ def test_account_update_full():
     assert req.proxy_url == "http://proxy:8080"
     assert req.max_connections == 15
     assert req.priority == 5
-
-
-# ── AccountResponse ───────────────────────────────────────────────────────────
 
 
 def test_account_response_construction():
@@ -205,9 +196,6 @@ def test_account_response_active_connections_default():
     assert resp.active_connections == 0
 
 
-# ── AccountTestResponse ───────────────────────────────────────────────────────
-
-
 def test_account_test_response_success():
     resp = AccountTestResponse(status="ok", latency_ms=42)
     assert resp.status == "ok"
@@ -226,9 +214,6 @@ def test_account_test_response_defaults():
     resp = AccountTestResponse(status="ok")
     assert resp.latency_ms is None
     assert resp.detail is None
-
-
-# ── UserCreateRequest ─────────────────────────────────────────────────────────
 
 
 def test_user_create_defaults():
@@ -261,9 +246,6 @@ def test_user_create_missing_required():
         UserCreateRequest(username="alice", email="a@a.com")  # missing password
 
 
-# ── UserUpdateRequest ─────────────────────────────────────────────────────────
-
-
 def test_user_update_all_optional():
     req = UserUpdateRequest()
     assert req.email is None
@@ -286,9 +268,6 @@ def test_user_update_invalid_email():
 def test_user_update_role_change():
     req = UserUpdateRequest(role=UserRole.ADMIN)
     assert req.role == UserRole.ADMIN
-
-
-# ── UserResponse ──────────────────────────────────────────────────────────────
 
 
 def test_user_response_construction():
@@ -338,9 +317,6 @@ def test_user_response_from_attributes():
     assert resp.role == UserRole.ADMIN
 
 
-# ── LoginRequest ──────────────────────────────────────────────────────────────
-
-
 def test_login_request_construction():
     req = LoginRequest(username="alice", password="secret123")
     assert req.username == "alice"
@@ -355,9 +331,6 @@ def test_login_request_missing_fields():
         LoginRequest(password="secret")  # missing username
 
 
-# ── TokenResponse ─────────────────────────────────────────────────────────────
-
-
 def test_token_response_default_type():
     resp = TokenResponse(access_token="eyJ...")
     assert resp.token_type == "bearer"
@@ -369,16 +342,10 @@ def test_token_response_custom_type():
     assert resp.token_type == "jwt"
 
 
-# ── ApiKeyResponse ────────────────────────────────────────────────────────────
-
-
 def test_api_key_response():
     resp = ApiKeyResponse(api_key="ccp_abcdefghijklmnopqrstuvwxyz123456", prefix="ccp_abcdefgh")
     assert resp.api_key.startswith("ccp_")
     assert resp.prefix == "ccp_abcdefgh"
-
-
-# ── ModelStat ─────────────────────────────────────────────────────────────────
 
 
 def test_model_stat_construction():
@@ -394,9 +361,6 @@ def test_model_stat_missing_fields():
 
     with pytest.raises(ValidationError):
         ModelStat(count=10, tokens=500)  # missing model
-
-
-# ── UserStatsResponse ─────────────────────────────────────────────────────────
 
 
 def test_user_stats_response_construction():
@@ -438,9 +402,6 @@ def test_user_stats_response_multiple_models():
     assert len(stats.models) == 2
 
 
-# ── OverviewStatsResponse ─────────────────────────────────────────────────────
-
-
 def test_overview_stats_response():
     stats = OverviewStatsResponse(
         total_requests=1000,
@@ -458,9 +419,6 @@ def test_overview_stats_response_missing_fields():
         OverviewStatsResponse(total_requests=100, active_users=5)
 
 
-# ── AccountStatItem ───────────────────────────────────────────────────────────
-
-
 def test_account_stat_item():
     item = AccountStatItem(
         account_id=str(uuid.uuid4()),
@@ -476,9 +434,6 @@ def test_account_stat_item():
 def test_account_stat_item_zero_tokens():
     item = AccountStatItem(account_id="acc-123", count=0, input_tokens=0, output_tokens=0)
     assert item.count == 0
-
-
-# ── ModelStatItem ─────────────────────────────────────────────────────────────
 
 
 def test_model_stat_item():

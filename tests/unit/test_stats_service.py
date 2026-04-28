@@ -8,9 +8,6 @@ import pytest
 from src.application.services.stats_service import StatsService
 
 
-# ── get_user_stats ────────────────────────────────────────────────────────────
-
-
 async def test_get_user_stats_returns_response_object(mock_log_repo):
     user_id = uuid.uuid4()
     mock_log_repo.get_user_stats = AsyncMock(
@@ -111,9 +108,6 @@ async def test_get_user_stats_with_empty_models(mock_log_repo):
     assert result.total_requests == 0
 
 
-# ── get_overview ──────────────────────────────────────────────────────────────
-
-
 async def test_get_overview_returns_response_object(mock_log_repo):
     mock_log_repo.get_overview_stats = AsyncMock(
         return_value={
@@ -185,15 +179,17 @@ async def test_get_overview_zero_values(mock_log_repo):
     assert result.active_users == 0
 
 
-# ── get_account_stats ─────────────────────────────────────────────────────────
-
-
 async def test_get_account_stats_returns_list_of_items(mock_log_repo):
     account_id_1 = str(uuid.uuid4())
     account_id_2 = str(uuid.uuid4())
     mock_log_repo.get_account_stats = AsyncMock(
         return_value=[
-            {"account_id": account_id_1, "count": 200, "input_tokens": 10000, "output_tokens": 5000},
+            {
+                "account_id": account_id_1,
+                "count": 200,
+                "input_tokens": 10000,
+                "output_tokens": 5000,
+            },
             {"account_id": account_id_2, "count": 100, "input_tokens": 4000, "output_tokens": 2000},
         ]
     )
@@ -233,9 +229,6 @@ async def test_get_account_stats_returns_empty_list(mock_log_repo):
     result = await service.get_account_stats()
 
     assert result == []
-
-
-# ── get_model_stats ───────────────────────────────────────────────────────────
 
 
 async def test_get_model_stats_returns_list_of_items(mock_log_repo):

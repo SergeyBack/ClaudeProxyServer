@@ -29,9 +29,6 @@ _aes_key = _derive_aes_key()
 _cipher = AESGCM(_aes_key)
 
 
-# ── Password helpers ──────────────────────────────────────────────────────────
-
-
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
 
@@ -41,9 +38,6 @@ def verify_password(plain: str, hashed: str) -> bool:
         return bcrypt.checkpw(plain.encode(), hashed.encode())
     except Exception:
         return False
-
-
-# ── API key helpers ───────────────────────────────────────────────────────────
 
 
 def generate_api_key() -> tuple[str, str, str]:
@@ -59,9 +53,6 @@ def verify_api_key(raw: str, hashed: str) -> bool:
         return bcrypt.checkpw(raw.encode(), hashed.encode())
     except Exception:
         return False
-
-
-# ── JWT helpers ───────────────────────────────────────────────────────────────
 
 
 def create_access_token(subject: str) -> str:
@@ -85,9 +76,6 @@ def decode_access_token(token: str) -> str | None:
         return payload.get("sub")
     except JWTError:
         return None
-
-
-# ── AES-256-GCM encryption for stored tokens ─────────────────────────────────
 
 
 def encrypt_token(plaintext: str) -> str:

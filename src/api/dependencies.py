@@ -19,9 +19,6 @@ from src.infrastructure.state.account_state_manager import AccountStateManager
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-# ── Singletons from app.state ─────────────────────────────────────────────────
-
-
 def get_state_manager(request: Request) -> AccountStateManager:
     return request.app.state.state_manager
 
@@ -30,14 +27,8 @@ def get_client_pool(request: Request) -> ClientPool:
     return request.app.state.client_pool
 
 
-# ── DB session ────────────────────────────────────────────────────────────────
-
-
 async def get_session(session: AsyncSession = Depends(get_db)) -> AsyncSession:
     return session
-
-
-# ── Services ──────────────────────────────────────────────────────────────────
 
 
 def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
@@ -74,9 +65,6 @@ def get_proxy_service(
     )
 
 
-# ── Auth from JWT (web panel) ─────────────────────────────────────────────────
-
-
 async def get_current_user_jwt(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     session: AsyncSession = Depends(get_session),
@@ -99,9 +87,6 @@ async def get_current_admin(
     if user.role != UserRole.ADMIN:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required")
     return user
-
-
-# ── Auth from API key (Claude Code clients) ───────────────────────────────────
 
 
 async def get_current_user_from_api_key(

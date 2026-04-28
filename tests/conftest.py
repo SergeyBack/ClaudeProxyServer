@@ -17,8 +17,6 @@ from src.domain.models.account import Account, AccountStatus, AuthType
 from src.domain.models.user import User, UserRole
 from src.infrastructure.state.account_state_manager import AccountStateManager
 
-# ── Domain fixtures ───────────────────────────────────────────────────────────
-
 
 @pytest.fixture
 def sample_account() -> Account:
@@ -76,9 +74,6 @@ def state_manager() -> AccountStateManager:
     return AccountStateManager()
 
 
-# ── Mock repos ────────────────────────────────────────────────────────────────
-
-
 @pytest.fixture
 def mock_account_repo():
     repo = AsyncMock()
@@ -95,9 +90,6 @@ def mock_user_repo():
 def mock_log_repo():
     repo = AsyncMock()
     return repo
-
-
-# ── Mock Anthropic responses ──────────────────────────────────────────────────
 
 
 def make_anthropic_response(

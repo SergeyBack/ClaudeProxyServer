@@ -13,8 +13,6 @@ from src.domain.exceptions import (
     UserNotFoundError,
 )
 
-# ── ProxyError base class ─────────────────────────────────────────────────────
-
 
 def test_proxy_error_is_exception():
     err = ProxyError("base error")
@@ -25,9 +23,6 @@ def test_proxy_error_is_exception():
 def test_proxy_error_can_be_raised_and_caught():
     with pytest.raises(ProxyError):
         raise ProxyError("test")
-
-
-# ── NoAvailableAccountError ───────────────────────────────────────────────────
 
 
 def test_no_available_account_error_is_proxy_error():
@@ -44,9 +39,6 @@ def test_no_available_account_error_can_be_raised():
 def test_no_available_account_error_caught_as_proxy_error():
     with pytest.raises(ProxyError):
         raise NoAvailableAccountError("all accounts busy")
-
-
-# ── AccountBannedError ────────────────────────────────────────────────────────
 
 
 def test_account_banned_error_stores_account_id():
@@ -79,9 +71,6 @@ def test_account_banned_error_message_format():
     err = AccountBannedError("uuid-001")
     assert "banned" in str(err).lower()
     assert "uuid-001" in str(err)
-
-
-# ── AccountRateLimitedError ───────────────────────────────────────────────────
 
 
 def test_account_rate_limited_error_stores_account_id():
@@ -122,9 +111,6 @@ def test_account_rate_limited_error_zero_retry():
     assert err.retry_after == 0
 
 
-# ── UserNotFoundError ─────────────────────────────────────────────────────────
-
-
 def test_user_not_found_error_is_proxy_error():
     err = UserNotFoundError("User X not found")
     assert isinstance(err, ProxyError)
@@ -134,9 +120,6 @@ def test_user_not_found_error_is_proxy_error():
 def test_user_not_found_error_can_be_raised():
     with pytest.raises(UserNotFoundError):
         raise UserNotFoundError("not found")
-
-
-# ── InvalidCredentialsError ───────────────────────────────────────────────────
 
 
 def test_invalid_credentials_error_is_proxy_error():
@@ -154,9 +137,6 @@ def test_invalid_credentials_error_caught_as_proxy_error():
         raise InvalidCredentialsError("wrong")
 
 
-# ── AccountNotFoundError ──────────────────────────────────────────────────────
-
-
 def test_account_not_found_error_is_proxy_error():
     err = AccountNotFoundError("Account X not found")
     assert isinstance(err, ProxyError)
@@ -165,9 +145,6 @@ def test_account_not_found_error_is_proxy_error():
 def test_account_not_found_error_can_be_raised():
     with pytest.raises(AccountNotFoundError):
         raise AccountNotFoundError("no account")
-
-
-# ── PermissionDeniedError ─────────────────────────────────────────────────────
 
 
 def test_permission_denied_error_is_proxy_error():
@@ -183,9 +160,6 @@ def test_permission_denied_error_can_be_raised():
 def test_permission_denied_error_caught_as_proxy_error():
     with pytest.raises(ProxyError):
         raise PermissionDeniedError("denied")
-
-
-# ── Exception hierarchy ───────────────────────────────────────────────────────
 
 
 def test_all_errors_are_subclasses_of_proxy_error():

@@ -48,6 +48,5 @@ class RedisAccountStateManager:
             return {}
         values = await self._r.mget(keys)
         return {
-            UUID(k.decode().removeprefix("conn:")): int(v) if v else 0
-            for k, v in zip(keys, values)
+            UUID(k.decode().removeprefix("conn:")): int(v) if v else 0 for k, v in zip(keys, values)
         }
