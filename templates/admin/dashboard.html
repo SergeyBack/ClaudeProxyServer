@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% set show_sidebar = true %}
+{% set is_admin = true %}
+{% set active = "dashboard" %}
+{% block title %}Dashboard — Claude Proxy{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Dashboard</h4>
+
+<div class="row g-3 mb-4" id="statsRow">
+  <div class="col-md-3">
+    <div class="card stat-card blue p-3">
+      <div class="text-muted small">Requests Today</div>
+      <div class="fs-4 fw-bold" id="statRequests">—</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card green p-3">
+      <div class="text-muted small">Active Users</div>
+      <div class="fs-4 fw-bold" id="statUsers">—</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card yellow p-3">
+      <div class="text-muted small">Input Tokens</div>
+      <div class="fs-4 fw-bold" id="statInput">—</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card red p-3">
+      <div class="text-muted small">Output Tokens</div>
+      <div class="fs-4 fw-bold" id="statOutput">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6 class="mb-3">Claude Accounts</h6>
+      <div id="accountsList"><div class="text-muted small">Loading…</div></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6 class="mb-3">Banned / Rate-Limited</h6>
+      <div id="bannedList"><div class="text-muted small">Loading…</div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadDashboard() {
+  // Overview stats
+  const s = await (await apiFetch('/admin/stats/overview?days=1')).json();
+  document.getElementById('statRequests').textContent = s.total_requests.toLocaleString();
+  document.getElementById('statUsers').textContent = s.active_users;
+  document.getElementById('statInput').textContent = s.total_input_tokens.toLocaleString();
+  document.getElementById('statOutput').textContent = s.total_output_tokens.toLocaleString();
+
+  // Accounts
+  const accounts = await (await apiFetch('/admin/accounts')).json();
+  const al = document.getElementById('accountsList');
+  if (!accounts.length) { al.innerHTML = '<div class="text-muted small">No accounts yet.</div>'; }
+  else {
+    al.innerHTML = accounts.map(a => `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="fw-semibold">${a.name}</span>
+          <span class="text-muted small ms-2">${a.email}</span>
+        </div>
+        <div>
+          <span class="badge badge-${a.status}">${a.status}</span>
+          <span class="badge bg-secondary ms-1">${a.active_connections} conn</span>
+        </div>
+      </div>`).join('');
+  }
+
+  // Banned
+  const banned = await (await apiFetch('/admin/stats/banned')).json();
+  const bl = document.getElementById('bannedList');
+  if (!banned.length) { bl.innerHTML = '<div class="text-success small">✓ All accounts healthy</div>'; }
+  else {
+    bl.innerHTML = banned.map(a => `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>${a.name}</span>
+        <div>
+          <span class="badge badge-${a.status}">${a.status}</span>
+          <button class="btn btn-sm btn-outline-success ms-1" onclick="unban('${a.id}')">Unban</button>
+          <a href="/ui/admin/accounts" class="btn btn-sm btn-outline-danger ms-1">Delete</a>
+        </div>
+      </div>`).join('');
+  }
+}
+
+async function unban(id) {
+  await apiFetch(`/admin/accounts/${id}/unban`, {method:'POST'});
+  loadDashboard();
+}
+
+loadDashboard();
+setInterval(loadDashboard, 15000); // auto-refresh every 15s
+</script>
+{% endblock %}

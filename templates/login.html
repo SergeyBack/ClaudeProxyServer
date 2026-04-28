@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% set show_sidebar = false %}
+{% block title %}Login — Claude Proxy{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center">
+  <div class="card shadow" style="width:380px">
+    <div class="card-body p-4">
+      <h4 class="card-title text-center mb-4">⚡ Claude Proxy</h4>
+      <div id="error" class="alert alert-danger d-none"></div>
+      <form id="loginForm">
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-control" id="username" required autofocus/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" required/>
+            <button class="btn btn-outline-secondary" type="button" id="togglePwd" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100" id="submitBtn">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('togglePwd').addEventListener('click', () => {
+  const pwd = document.getElementById('password');
+  pwd.type = pwd.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const err = document.getElementById('error');
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+  err.classList.add('d-none');
+
+  const resp = await fetch('/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value,
+    })
+  });
+
+  if (resp.ok) {
+    const data = await resp.json();
+    localStorage.setItem('access_token', data.access_token);
+    const meResp = await fetch('/user/me', {
+      headers: {'Authorization': 'Bearer ' + data.access_token}
+    });
+    const me = await meResp.json();
+    localStorage.setItem('user_role', me.role);
+    location.href = me.role === 'admin' ? '/ui/admin/dashboard' : '/ui/user/usage';
+  } else {
+    const data = await resp.json().catch(() => ({}));
+    err.textContent = data.detail || 'Login failed';
+    err.classList.remove('d-none');
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+});
+</script>
+{% endblock %}

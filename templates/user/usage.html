@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% set show_sidebar = true %}
+{% set active = "usage" %}
+{% block title %}My Usage — Claude Proxy{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">My Usage</h4>
+
+<div class="d-flex align-items-center gap-2 mb-4">
+  <label class="form-label mb-0">Period:</label>
+  <select class="form-select form-select-sm" style="width:140px" id="daysSelect" onchange="loadUsage()">
+    <option value="1">Today</option>
+    <option value="7">Last 7 days</option>
+    <option value="30" selected>Last 30 days</option>
+    <option value="90">Last 90 days</option>
+  </select>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card stat-card blue p-3">
+      <div class="text-muted small">Total Requests</div>
+      <div class="fs-3 fw-bold" id="totalReqs">—</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card green p-3">
+      <div class="text-muted small">Input Tokens</div>
+      <div class="fs-3 fw-bold" id="inputTok">—</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card yellow p-3">
+      <div class="text-muted small">Output Tokens</div>
+      <div class="fs-3 fw-bold" id="outputTok">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="card p-3 mb-4">
+  <h6 class="mb-3">Models Used</h6>
+  <div id="modelsList"><div class="text-muted small">Loading…</div></div>
+</div>
+
+<div class="card p-3">
+  <h6 class="mb-2">Setup Instructions</h6>
+  <p class="text-muted small mb-2">Configure Claude Code to use this proxy:</p>
+  <div class="mb-2">
+    <label class="form-label small fw-semibold">Your API Key prefix: <code id="apiKeyPrefix">—</code></label>
+    <p class="text-muted small">Your full API key was shown once when your account was created or last rotated. Contact admin if you need it rotated.</p>
+  </div>
+  <pre id="setupCode">Loading…</pre>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let myProfile = null;
+
+async function loadProfile() {
+  const resp = await apiFetch('/user/me');
+  if (!resp) return;
+  myProfile = await resp.json();
+  document.getElementById('apiKeyPrefix').textContent = myProfile.api_key_prefix || 'none';
+  const host = location.origin;
+  document.getElementById('setupCode').textContent =
+    `export ANTHROPIC_BASE_URL=${host}\nexport ANTHROPIC_API_KEY=<your_full_ccp_key>\n\n# Then use Claude Code normally:\nclaude -p "Hello world"`;
+}
+
+async function loadUsage() {
+  const days = document.getElementById('daysSelect').value;
+  const resp = await apiFetch(`/user/usage?days=${days}`);
+  if (!resp) return;
+  const data = await resp.json();
+
+  document.getElementById('totalReqs').textContent = data.total_requests.toLocaleString();
+  document.getElementById('inputTok').textContent = data.total_input_tokens.toLocaleString();
+  document.getElementById('outputTok').textContent = data.total_output_tokens.toLocaleString();
+
+  const ml = document.getElementById('modelsList');
+  if (!data.models.length) {
+    ml.innerHTML = '<div class="text-muted small">No requests in this period.</div>';
+    return;
+  }
+  const maxCount = Math.max(...data.models.map(m => m.count));
+  ml.innerHTML = data.models.map(m => `
+    <div class="mb-3">
+      <div class="d-flex justify-content-between mb-1">
+        <span class="small fw-semibold">${m.model}</span>
+        <span class="small text-muted">${m.count} requests · ${(m.tokens||0).toLocaleString()} tokens</span>
+      </div>
+      <div class="progress" style="height:6px">
+        <div class="progress-bar" style="width:${Math.round(m.count/maxCount*100)}%"></div>
+      </div>
+    </div>`).join('');
+}
+
+loadProfile();
+loadUsage();
+</script>
+{% endblock %}

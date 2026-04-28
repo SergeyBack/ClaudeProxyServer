@@ -1,0 +1,57 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.json
+coverage.xml
+htmlcov/
+.tox/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs
+logs/*.log
+*.log
+
+# IDE — JetBrains
+.idea/
+*.iml
+
+# IDE — VSCode
+.vscode/
+!.vscode/extensions.json
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Docker
+*.override.env
+
+# Alembic
+alembic/versions/*.pyc
+
+# Claude Code local files
+.claude/
+CLAUDE.md
+.claudeignore
