@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.lifespan import lifespan
 from src.api.middleware.request_id import RequestIDMiddleware
@@ -33,6 +34,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Prometheus metrics
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
     # Routers
     app.include_router(health.router)
