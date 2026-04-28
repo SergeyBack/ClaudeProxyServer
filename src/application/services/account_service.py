@@ -6,9 +6,9 @@ from src.core.logger import logger
 from src.core.security import encrypt_token
 from src.domain.exceptions import AccountNotFoundError
 from src.domain.interfaces.account_repository import AccountRepository
+from src.domain.interfaces.account_state_manager import IAccountStateManager
 from src.domain.models.account import Account, AccountStatus, AuthType
 from src.infrastructure.http.client_pool import ClientPool
-from src.infrastructure.state.account_state_manager import AccountStateManager
 
 
 class AccountService:
@@ -16,7 +16,7 @@ class AccountService:
         self,
         repo: AccountRepository,
         pool: ClientPool,
-        state: AccountStateManager,
+        state: IAccountStateManager,
     ) -> None:
         self._repo = repo
         self._pool = pool

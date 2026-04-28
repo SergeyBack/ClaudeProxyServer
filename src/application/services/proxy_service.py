@@ -15,12 +15,12 @@ from src.domain.exceptions import (
     NoAvailableAccountError,
 )
 from src.domain.interfaces.account_repository import AccountRepository
+from src.domain.interfaces.account_state_manager import IAccountStateManager
 from src.domain.interfaces.log_repository import LogRepository
 from src.domain.models.account import Account, AccountStatus
 from src.domain.models.request_log import RequestLog
 from src.domain.models.user import User
 from src.infrastructure.http.client_pool import ClientPool
-from src.infrastructure.state.account_state_manager import AccountStateManager
 
 # Headers to strip from incoming requests before forwarding
 _STRIP_HEADERS = frozenset(
@@ -41,7 +41,7 @@ class ProxyService:
         self,
         account_repo: AccountRepository,
         log_repo: LogRepository,
-        state: AccountStateManager,
+        state: IAccountStateManager,
         pool: ClientPool,
         router: RoutingStrategy,
     ) -> None:

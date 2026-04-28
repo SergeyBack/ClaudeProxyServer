@@ -4,22 +4,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.routing.least_connections import LeastConnectionsStrategy
 from src.application.services.account_service import AccountService
+from src.application.services.probe_service import ProbeService
 from src.application.services.proxy_service import ProxyService
 from src.application.services.stats_service import StatsService
 from src.application.services.user_service import UserService
 from src.core.database import get_db
 from src.core.security import decode_access_token
+from src.domain.interfaces.account_state_manager import IAccountStateManager
 from src.domain.models.user import User, UserRole
 from src.infrastructure.http.client_pool import ClientPool
 from src.infrastructure.repositories.account_repository import SqlAccountRepository
 from src.infrastructure.repositories.log_repository import SqlLogRepository
 from src.infrastructure.repositories.user_repository import SqlUserRepository
-from src.infrastructure.state.account_state_manager import AccountStateManager
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_state_manager(request: Request) -> AccountStateManager:
+def get_state_manager(request: Request) -> IAccountStateManager:
     return request.app.state.state_manager
 
 
@@ -38,7 +39,7 @@ def get_user_service(session: AsyncSession = Depends(get_session)) -> UserServic
 def get_account_service(
     session: AsyncSession = Depends(get_session),
     pool: ClientPool = Depends(get_client_pool),
-    state: AccountStateManager = Depends(get_state_manager),
+    state: IAccountStateManager = Depends(get_state_manager),
 ) -> AccountService:
     return AccountService(
         repo=SqlAccountRepository(session),
@@ -54,7 +55,7 @@ def get_stats_service(session: AsyncSession = Depends(get_session)) -> StatsServ
 def get_proxy_service(
     session: AsyncSession = Depends(get_session),
     pool: ClientPool = Depends(get_client_pool),
-    state: AccountStateManager = Depends(get_state_manager),
+    state: IAccountStateManager = Depends(get_state_manager),
 ) -> ProxyService:
     return ProxyService(
         account_repo=SqlAccountRepository(session),
@@ -62,6 +63,18 @@ def get_proxy_service(
         state=state,
         pool=pool,
         router=LeastConnectionsStrategy(),
+    )
+
+
+def get_probe_service(
+    session: AsyncSession = Depends(get_session),
+    pool: ClientPool = Depends(get_client_pool),
+    state: IAccountStateManager = Depends(get_state_manager),
+) -> ProbeService:
+    return ProbeService(
+        account_repo=SqlAccountRepository(session),
+        client_pool=pool,
+        state_manager=state,
     )
 
 

@@ -3,12 +3,12 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+from src.domain.interfaces.account_state_manager import IAccountStateManager
 from src.domain.models.account import Account
 
 if TYPE_CHECKING:
     from src.infrastructure.http.client_pool import ClientPool
     from src.infrastructure.repositories.account_repository import SqlAccountRepository
-    from src.infrastructure.state.account_state_manager import AccountStateManager
 
 
 class ProbeService:
@@ -16,7 +16,7 @@ class ProbeService:
         self,
         account_repo: SqlAccountRepository,
         client_pool: ClientPool,
-        state_manager: AccountStateManager,
+        state_manager: IAccountStateManager,
     ) -> None:
         self._repo = account_repo
         self._pool = client_pool
@@ -24,20 +24,22 @@ class ProbeService:
 
     async def probe_account(self, account: Account) -> dict:
         """Fire minimal request; return status dict."""
-        from src.core.config import settings
         from src.core.security import decrypt_token
 
         start = time.monotonic()
         try:
             token = decrypt_token(account.auth_token)
             client = self._pool.get(account.id)
+
+            headers: dict[str, str] = {"anthropic-version": "2023-06-01"}
+            if account.auth_type == "api_key":
+                headers["x-api-key"] = token
+            else:
+                headers["authorization"] = f"Bearer {token}"
+
             resp = await client.post(
-                f"{settings.ANTHROPIC_BASE_URL}/v1/messages",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
+                "/v1/messages",
+                headers=headers,
                 json={
                     "model": "claude-haiku-4-5-20251001",
                     "max_tokens": 1,
@@ -53,7 +55,11 @@ class ProbeService:
             elif resp.status_code in (401, 403):
                 return {"status": "banned", "latency_ms": latency_ms}
             else:
-                return {"status": "error", "latency_ms": latency_ms, "code": resp.status_code}
+                return {
+                    "status": "error",
+                    "latency_ms": latency_ms,
+                    "detail": f"HTTP {resp.status_code}",
+                }
         except Exception as exc:
             latency_ms = int((time.monotonic() - start) * 1000)
-            return {"status": "error", "latency_ms": latency_ms, "error": str(exc)}
+            return {"status": "error", "latency_ms": latency_ms, "detail": str(exc)}
