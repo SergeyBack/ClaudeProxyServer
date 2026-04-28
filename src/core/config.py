@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     MAX_PROMPT_LOG_CHARS: int = 50_000
     ENABLE_PROMPT_LOGGING: bool = True
 
+    # Redis
+    REDIS_URL: str = "redis://localhost:6379/0"
+
     # Logging
     LOG_LEVEL: str = "INFO"
 

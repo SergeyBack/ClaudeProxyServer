@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import redis.asyncio as aioredis
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 
@@ -12,7 +13,7 @@ from src.domain.models.account import AccountStatus
 from src.infrastructure.http.client_pool import ClientPool
 from src.infrastructure.repositories.account_repository import SqlAccountRepository
 from src.infrastructure.repositories.user_repository import SqlUserRepository
-from src.infrastructure.state.account_state_manager import AccountStateManager
+from src.infrastructure.state.redis_account_state_manager import RedisAccountStateManager
 
 
 @asynccontextmanager
@@ -21,7 +22,8 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Claude Proxy Server")
 
     # Init singletons
-    state_manager = AccountStateManager()
+    redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=False)
+    state_manager = RedisAccountStateManager(redis_client)
     client_pool = ClientPool()
 
     app.state.state_manager = state_manager
@@ -74,4 +76,5 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down Claude Proxy Server")
     await client_pool.close_all()
+    await redis_client.aclose()
     await engine.dispose()

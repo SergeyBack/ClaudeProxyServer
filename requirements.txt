@@ -14,3 +14,4 @@ cryptography>=44
 jinja2>=3.1
 python-multipart>=0.0.18
 apscheduler>=3.10
+redis[hiredis]>=5.0
