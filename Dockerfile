@@ -15,10 +15,12 @@ RUN poetry config virtualenvs.create false \
 
 COPY . .
 
-CMD ["uvicorn", "src.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--workers", "1", \
-     "--loop", "uvloop", \
-     "--http", "httptools", \
-     "--timeout-graceful-shutdown", "30"]
+ENV WORKERS=4
+
+CMD ["sh", "-c", "uvicorn src.main:app \
+     --host 0.0.0.0 \
+     --port 8000 \
+     --workers ${WORKERS} \
+     --loop uvloop \
+     --http httptools \
+     --timeout-graceful-shutdown 30"]

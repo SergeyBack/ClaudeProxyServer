@@ -157,6 +157,7 @@ All settings are read from the `.env` file (or environment variables).
 | `REQUEST_TIMEOUT_SECONDS` | `300.0` | Per-request timeout forwarded to Anthropic |
 | `MAX_PROMPT_LOG_CHARS` | `50000` | Maximum characters stored per prompt/response in the DB |
 | `ENABLE_PROMPT_LOGGING` | `true` | Set `false` to suppress prompt/response content (GDPR) |
+| `REDIS_URL` | `redis://localhost:6379/0` | Redis connection URL (used by AccountStateManager) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `15` | JWT access token lifetime |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | `7` | JWT refresh token lifetime |
 | `LOG_LEVEL` | `INFO` | Loguru log level |
@@ -203,12 +204,13 @@ All settings are read from the `.env` file (or environment variables).
 | `GET` | `/user/usage` | Bearer | Personal token usage |
 | `GET` | `/user/logs` | Bearer | Personal request log |
 
-### Health
+### Health & Metrics
 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Liveness check (always 200) |
 | `GET` | `/ready` | Readiness check (200 when DB is reachable) |
+| `GET` | `/metrics` | Prometheus metrics |
 
 ## Web Panel
 
@@ -321,7 +323,7 @@ curl -X POST http://localhost:8001/v1/messages \
    - Restrict port 8000 at the firewall — expose only port 80 via nginx.
    - Use TLS termination at the nginx or load-balancer level.
 
-4. **Scaling.** The proxy uses Redis for shared state (`AccountStateManager`), so multiple workers and instances are supported out of the box.
+4. **Scaling.** The proxy uses Redis for shared state, so multiple workers are safe. Defaults to 4 workers (`WORKERS=4` in the `Dockerfile`). Override per deployment: `docker run -e WORKERS=8 ...` or set `WORKERS` in your compose override.
 
 ## Showing to Clients (Demo)
 
