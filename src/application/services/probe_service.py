@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from src.domain.interfaces.account_state_manager import IAccountStateManager
 from src.domain.models.account import Account
 
 if TYPE_CHECKING:
@@ -16,11 +15,9 @@ class ProbeService:
         self,
         account_repo: SqlAccountRepository,
         client_pool: ClientPool,
-        state_manager: IAccountStateManager,
     ) -> None:
         self._repo = account_repo
         self._pool = client_pool
-        self._state = state_manager
 
     async def probe_account(self, account: Account) -> dict:
         """Fire minimal request; return status dict."""

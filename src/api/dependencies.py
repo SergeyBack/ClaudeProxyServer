@@ -69,12 +69,10 @@ def get_proxy_service(
 def get_probe_service(
     session: AsyncSession = Depends(get_session),
     pool: ClientPool = Depends(get_client_pool),
-    state: IAccountStateManager = Depends(get_state_manager),
 ) -> ProbeService:
     return ProbeService(
         account_repo=SqlAccountRepository(session),
         client_pool=pool,
-        state_manager=state,
     )
 
 

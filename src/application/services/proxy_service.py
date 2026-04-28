@@ -92,20 +92,21 @@ class ProxyService:
                 content = content[: settings.MAX_PROMPT_LOG_CHARS] + "...[truncated]"
             log.prompt_content = {"messages": messages, "system": payload.get("system")}
 
+        auth_token = decrypt_token(account.auth_token)
+        client = self._pool.get(account.id)
+        upstream_headers = _build_upstream_headers(request, auth_token, account.auth_type)
+
+        if is_streaming:
+            # For streaming, lifecycle (release/log) is managed inside the generator
+            # because StreamingResponse body executes after this function returns.
+            return await self._stream_response(
+                client, upstream_headers, payload, account, log, start_ms
+            )
+
         try:
-            auth_token = decrypt_token(account.auth_token)
-            client = self._pool.get(account.id)
-            upstream_headers = _build_upstream_headers(request, auth_token, account.auth_type)
-
-            if is_streaming:
-                return await self._stream_response(
-                    client, upstream_headers, payload, account, log, start_ms
-                )
-            else:
-                return await self._sync_response(
-                    client, upstream_headers, payload, account, log, start_ms
-                )
-
+            return await self._sync_response(
+                client, upstream_headers, payload, account, log, start_ms
+            )
         except httpx.HTTPStatusError as exc:
             log.status_code = exc.response.status_code
             log.error_type = "http_error"
@@ -186,6 +187,9 @@ class ProxyService:
                     if resp.status_code == 429:
                         retry_after = int(resp.headers.get("retry-after", "60"))
                         await self._state.mark_rate_limited(account.id, retry_after)
+                        await self._account_repo.update_status(
+                            account.id, AccountStatus.RATE_LIMITED, None
+                        )
 
                     log.status_code = resp.status_code
                     buffer = b""
@@ -207,6 +211,17 @@ class ProxyService:
                 log.error_type = type(exc).__name__
                 logger.error(f"Stream error for account {account.id}: {exc}")
                 raise
+            finally:
+                await self._state.release(account.id)
+                proxy_active_connections.labels(account_id=str(account.id)).dec()
+                log.duration_ms = int((time.monotonic() - start_ms) * 1000)
+                if log.status_code == 0:
+                    log.status_code = 200
+                try:
+                    await self._log_repo.create(log)
+                    await self._account_repo.update_last_used(account.id)
+                except Exception as exc:
+                    logger.error(f"Failed to write stream log: {exc}")
 
         return StreamingResponse(
             event_generator(),
