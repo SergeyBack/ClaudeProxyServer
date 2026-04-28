@@ -25,6 +25,7 @@ python-multipart = "^0.0.18"
 email-validator = "^2.0"
 apscheduler = "^3.10"
 redis = {version = ">=5.0", extras = ["hiredis"]}
+prometheus-fastapi-instrumentator = "^7.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"

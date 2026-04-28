@@ -20,6 +20,11 @@ from src.domain.models.account import Account, AccountStatus
 from src.domain.models.request_log import RequestLog
 from src.domain.models.user import User
 from src.infrastructure.http.client_pool import ClientPool
+from src.infrastructure.metrics import (
+    proxy_active_connections,
+    proxy_tokens_input,
+    proxy_tokens_output,
+)
 from src.infrastructure.state.account_state_manager import AccountStateManager
 
 # Headers to strip from incoming requests before forwarding
@@ -68,6 +73,7 @@ class ProxyService:
             raise NoAvailableAccountError("No Claude accounts available")
 
         await self._state.acquire(account.id)
+        proxy_active_connections.labels(account_id=str(account.id)).inc()
         start_ms = time.monotonic()
         log = RequestLog(
             user_id=user.id,
@@ -111,6 +117,7 @@ class ProxyService:
             raise
         finally:
             await self._state.release(account.id)
+            proxy_active_connections.labels(account_id=str(account.id)).dec()
             log.duration_ms = int((time.monotonic() - start_ms) * 1000)
             if log.status_code == 0:
                 log.status_code = 200
@@ -146,6 +153,10 @@ class ProxyService:
         log.output_tokens = usage.get("output_tokens")
         log.cache_read_tokens = usage.get("cache_read_input_tokens")
         log.cache_write_tokens = usage.get("cache_creation_input_tokens")
+        if log.input_tokens:
+            proxy_tokens_input.labels(account_id=str(account.id)).inc(log.input_tokens)
+        if log.output_tokens:
+            proxy_tokens_output.labels(account_id=str(account.id)).inc(log.output_tokens)
         if settings.ENABLE_PROMPT_LOGGING:
             log.response_content = body
 
@@ -185,6 +196,12 @@ class ProxyService:
 
                     # Parse token usage from accumulated SSE
                     _extract_usage_from_sse(buffer, log)
+                    if log.input_tokens:
+                        proxy_tokens_input.labels(account_id=str(account.id)).inc(log.input_tokens)
+                    if log.output_tokens:
+                        proxy_tokens_output.labels(account_id=str(account.id)).inc(
+                            log.output_tokens
+                        )
 
             except Exception as exc:
                 log.error_type = type(exc).__name__
